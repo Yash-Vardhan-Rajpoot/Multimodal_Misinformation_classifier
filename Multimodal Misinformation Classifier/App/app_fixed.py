@@ -1,4 +1,3 @@
-
 import streamlit as st
 from PIL import Image
 import sys
@@ -9,41 +8,29 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from Model.clip_model import CLIPEncoder
 from Utils.similarity import compute_similarity
 
-@st.cache_resource
-def load_model():
-    return CLIPEncoder()
+st.title("Multimodal Misinformation Classifier")
 
-model = load_model()
+model = CLIPEncoder()
 
-st.set_page_config(page_title="Multimodal Misinformation Detector", layout="centered")
+uploaded_image = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"])
+caption = st.text_input("Enter Caption")
 
-st.title("🧠 Multimodal Misinformation Detector")
+threshold = 0.26
 
-uploaded_file = st.file_uploader("Upload an Image", type=["png", "jpg", "jpeg"])
+if uploaded_image and caption:
 
-caption = st.text_input("Enter Caption for the Image")
+    image = Image.open(uploaded_image).convert("RGB")
 
-threshold = st.slider("Select Similarity Threshold", 0.0, 1.0, 0.26)
+    st.image(image, width="stretch")
 
-if uploaded_file and caption:
+    image_embedding = model.encode_image(image)
+    text_embedding = model.encode_text(caption)
 
-    image = Image.open(uploaded_file).convert("RGB")
+    similarity = compute_similarity(image_embedding, text_embedding)
 
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+    st.write("Similarity Score:", similarity)
 
-    if st.button("Check Post"):
-
-        with st.spinner("Analyzing..."):
-
-            image_embedding = model.encode_image(image)
-            text_embedding = model.encode_text(caption)
-            similarity = compute_similarity(image_embedding, text_embedding)
-
-        st.subheader(f"Similarity Score: {similarity:.3f}")
-
-        st.progress(float(similarity))
-
-        if similarity > threshold:
-            st.error("⚠️ Potential Misinformation Detected")
-        else:
-            st.success("✅ Image and Caption Match")
+    if similarity > threshold:
+        st.success("Likely Real Information")
+    else:
+        st.error("Potential Misinformation")
