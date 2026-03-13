@@ -1,4 +1,4 @@
-```python
+
 import streamlit as st
 from PIL import Image
 import sys
@@ -36,9 +36,7 @@ if uploaded_file and caption:
         with st.spinner("Analyzing..."):
 
             image_embedding = model.encode_image(image)
-
             text_embedding = model.encode_text(caption)
-
             similarity = compute_similarity(image_embedding, text_embedding)
 
         st.subheader(f"Similarity Score: {similarity:.3f}")
@@ -49,4 +47,3 @@ if uploaded_file and caption:
             st.error("⚠️ Potential Misinformation Detected")
         else:
             st.success("✅ Image and Caption Match")
-```
