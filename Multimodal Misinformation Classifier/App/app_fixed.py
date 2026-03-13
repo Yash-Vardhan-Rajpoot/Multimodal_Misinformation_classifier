@@ -1,44 +1,77 @@
+import sys
+import os
 import streamlit as st
 from PIL import Image
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from Model.clip_model import CLIPEncoder
 from Utils.similarity import compute_similarity
-import torch
 
+
+# Page title
 st.title("Multimodal Misinformation Detector")
 
-st.write("Upload an image and provide a caption. The system will check if they match.")
+st.write("Upload an image and provide a caption to check if they match.")
 
-# Load model
+
+# Load model only once
 @st.cache_resource
 def load_model():
     return CLIPEncoder()
 
+
 model = load_model()
 
-# Image uploader
-uploaded_image = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"])
+
+# Upload image
+uploaded_image = st.file_uploader("Upload Image", type=["jpg", "jpeg", "png"])
 
 # Caption input
 caption = st.text_input("Enter Caption")
 
-if uploaded_image and caption:
 
+# Similarity threshold
+threshold = 0.26
+
+
+# Display uploaded image
+if uploaded_image is not None:
+
+    uploaded_image.seek(0)
     image = Image.open(uploaded_image).convert("RGB")
 
-    st.image(image, caption="Uploaded Image", width="stretch")
+    st.image(image, caption="Uploaded Image", use_container_width=True)
 
-    if st.button("Check Post"):
 
-        with torch.no_grad():
-            # image already PIL.Image
-            image_embedding = model.encode_image(image)
-            text_embedding = model.encode_text(caption)
+# Button to run detection
+if st.button("Check Post"):
 
-            score = compute_similarity(image_embedding, text_embedding)
+    if uploaded_image is None or caption.strip() == "":
+        st.warning("Please upload an image and enter a caption.")
 
-        st.write("### Similarity Score:", round(score, 3))
+    else:
 
-        if score > 0.26:
+        # Reset pointer before reading again
+        uploaded_image.seek(0)
+
+        # Generate embeddings
+        image_embedding = model.encode_image(uploaded_image)
+        text_embedding = model.encode_text(caption)
+
+        # Compute similarity
+        score = compute_similarity(image_embedding, text_embedding)
+
+        score = float(score)
+
+        # Display similarity score
+        st.subheader("Similarity Score")
+        st.write(round(score, 3))
+
+        st.write("Threshold:", threshold)
+
+        # Classification
+        if score >= threshold:
             st.success("Caption matches the image")
         else:
             st.error("Potential Misinformation Detected")
