@@ -37,23 +37,19 @@ The system computes similarity scores and selects the caption that **best aligns
 
 ## 🏗️ System Architecture
 
- Image              Captions
-   ↓                   ↓  
-CLIP Encoder       CLIP Encoder
-   ↓                   ↓ 
-Image Embedding    Text Embeddings  
-
-  ↓
-
-Cosine Similarity
-
-  ↓
-
-Caption Ranking
-
-  ↓
-
-Best Caption Selected
+```mermaid
+flowchart TD
+    A[Image] --> B[CLIP Encoder]
+    C[Caption] --> D[CLIP Encoder]
+    
+    B --> E[Image Embedding]
+    D --> F[Text Embedding]
+    
+    E --> G[Cosine Similarity]
+    F --> G
+    
+    G --> H[Caption Ranking]
+    H --> I[Best Caption Selected]
 
 The system uses **CLIP (Contrastive Language–Image Pretraining)** to encode both image and text into the **same embedding space**, enabling direct comparison between them.
 
